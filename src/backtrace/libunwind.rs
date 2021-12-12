@@ -97,7 +97,7 @@ pub unsafe fn trace(cb: &mut dyn FnMut(&super::Frame) -> bool) {
 #[cfg(all(target_os = "android", target_arch = "arm"))]
 #[inline(always)]
 pub unsafe fn trace(cb: &mut dyn FnMut(&super::Frame) -> bool) {
-    const ARM_BACKTRACE_DEPTH_LIMIT: usize = 4096;
+    const ARM_BACKTRACE_DEPTH_LIMIT: usize = 128;
     let mut depth = 0usize;
     trace_inner(&mut |frame| {
         let cb_result = cb(frame);
