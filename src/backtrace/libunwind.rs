@@ -88,8 +88,26 @@ impl Clone for Frame {
     }
 }
 
+#[cfg(not(all(target_os = "android", target_arch = "arm")))]
 #[inline(always)]
-pub unsafe fn trace(mut cb: &mut dyn FnMut(&super::Frame) -> bool) {
+pub unsafe fn trace(cb: &mut dyn FnMut(&super::Frame) -> bool) {
+    trace_inner(cb);
+}
+
+#[cfg(all(target_os = "android", target_arch = "arm"))]
+#[inline(always)]
+pub unsafe fn trace(cb: &mut dyn FnMut(&super::Frame) -> bool) {
+    const ARM_BACKTRACE_DEPTH_LIMIT: usize = 4096;
+    let mut depth = 0usize;
+    trace_inner(&mut |frame| {
+        let cb_result = cb(frame);
+        depth += 1;
+        cb_result && depth < ARM_BACKTRACE_DEPTH_LIMIT
+    });
+}
+
+#[inline(always)]
+unsafe fn trace_inner(mut cb: &mut dyn FnMut(&super::Frame) -> bool) {
     uw::_Unwind_Backtrace(trace_fn, &mut cb as *mut _ as *mut _);
 
     extern "C" fn trace_fn(
